@@ -3,61 +3,62 @@ class Apriori {
 		this.transaksi = transaksi;
 		this.minFrekuensi = minFrekuensi;
 		this.nTransaksi = Object.entries(this.transaksi).length;
+		this.confident = 50;
 		this.itemSet = [];
 		this.rule = [];
 	}
 
 	prosess() {
-		$("#log").append(`<p>Menghitung itemset 1...</p>`)
+		$("#log").append(`<p>Menghitung itemset 1...</p>`);
 		setTimeout(() => {
 			this.item1();
-			$("#log").append(`<p>Menghitung itemset 2...</p>`)
+			$("#log").append(`<p>Menghitung itemset 2...</p>`);
 			setTimeout(() => {
-				$("#log").append(`<p>Menghitung itemset 3...</p>`)
+				$("#log").append(`<p>Menghitung itemset 3...</p>`);
 				this.item2();
 				setTimeout(() => {
 					this.item3();
 					this.setRule();
-					$("#overlay").hide()
-				}, 100)
-			}, 100)
-		}, 100)
-
+					$("#overlay").hide();
+				}, 100);
+			}, 100);
+		}, 100);
 	}
 
 	getFrekuensi(kombinasi) {
 		let frekuensi = 0;
 		for (let [key, value] of Object.entries(this.transaksi)) {
-			let hasilKombinasi = kombinasi.filter((val, i) => value.includes(val))
-			if (hasilKombinasi.length == kombinasi.length)
-				frekuensi++;
+			let hasilKombinasi = kombinasi.filter((val, i) => value.includes(val));
+			if (hasilKombinasi.length == kombinasi.length) frekuensi++;
 		}
-		return frekuensi
+		return frekuensi;
 	}
 
 	confident(frekuensi, kombinasi) {
-		return (frekuensi / this.getFrekuensi(kombinasi) * 100).toFixed(2);
+		return ((frekuensi / this.getFrekuensi(kombinasi)) * 100).toFixed(2);
 	}
 
 	support(frekuensi) {
-		return (frekuensi / this.nTransaksi * 100).toFixed(2);
+		return ((frekuensi / this.nTransaksi) * 100).toFixed(2);
 	}
 
 	item1() {
 		let uniqueItem = new Set();
 		let itemSet = [];
 
-		for (let [key, values] of Object.entries(this.transaksi)) uniqueItem.add(...values);
+		for (let [key, values] of Object.entries(this.transaksi))
+			uniqueItem.add(...values);
 
 		itemSet = Array.from(uniqueItem)
 			.map((currentVal) => ({
 				items: currentVal,
-				frekuensi: this.getFrekuensi([currentVal])
-			})).filter((val, i) => val.frekuensi > this.minFrekuensi)
+				frekuensi: this.getFrekuensi([currentVal]),
+			}))
+			.filter((val, i) => val.frekuensi > this.minFrekuensi);
 
 		if (itemSet.length > 0) this.itemSet = itemSet;
 
-		console.log(this.itemSet)
+		console.log(this.itemSet);
 	}
 
 	item2() {
@@ -69,14 +70,14 @@ class Apriori {
 				if (frekuensi > 5) {
 					itemSet.push({
 						items,
-						frekuensi
+						frekuensi,
 					});
 				}
 			}
 		}
 
 		if (itemSet.length > 0) this.itemSet = itemSet;
-		console.log(this.itemSet)
+		console.log(this.itemSet);
 	}
 
 	item3() {
@@ -89,7 +90,7 @@ class Apriori {
 					if (frekuensi > 5) {
 						itemSet3.push({
 							items,
-							frekuensi
+							frekuensi,
 						});
 					}
 				}
@@ -97,7 +98,7 @@ class Apriori {
 		}
 
 		if (itemSet3.length > 0) this.itemSet = itemSet3;
-		console.log(this.itemSet)
+		console.log(this.itemSet);
 	}
 
 	getRule() {
@@ -110,7 +111,7 @@ class Apriori {
 			for (let j = 0; j < arrItems.length; j++) {
 				for (let k = j + 1; k < arrItems.length; k++) {
 					let items = [arrItems[j], arrItems[k]];
-					this.addRule([items[0]], [items[1]])
+					this.addRule([items[0]], [items[1]]);
 				}
 			}
 			for (let j = 0; j < arrItems.length; j++) {
@@ -121,76 +122,76 @@ class Apriori {
 					k = 0;
 					l = 1;
 				}
-				this.addRule([arrItems[j], arrItems[k]], [arrItems[l]])
+				this.addRule([arrItems[j], arrItems[k]], [arrItems[l]]);
 			}
-
 		}
 		console.log(this.rule);
-		this.ruleFilter()
+		this.ruleFilter();
 
-		$("#card-rule").show()
-		this.dataTable()
-
+		$("#card-rule").show();
+		this.dataTable();
 	}
 
 	ruleFilter() {
-		this.rule = this.rule.map((val, i) => {
-			let frekuensi = this.getFrekuensi([...val.if, ...val.then]);
-			let support = this.support(frekuensi);
-			let confident = this.confident(frekuensi, val.if);
-			return {
-				if: val.if.join(","),
-				then: val.then.join(","),
-				support,
-				confident
-			}
-		}).filter((data) => data.confident > 50);
+		this.rule = this.rule
+			.map((val, i) => {
+				let frekuensi = this.getFrekuensi([...val.if, ...val.then]);
+				let support = this.support(frekuensi);
+				let confident = this.confident(frekuensi, val.if);
+				return {
+					if: val.if.join(","),
+					then: val.then.join(","),
+					support,
+					confident,
+				};
+			})
+			.filter((data) => data.confident > this.confident);
 		console.log(this.rule);
 	}
 
 	addRule(fst, sc) {
 		this.rule.push({
 			if: fst,
-			then: sc
+			then: sc,
 		});
 		this.rule.push({
 			if: sc,
-			then: fst
+			then: fst,
 		});
 	}
+
 	dataTable() {
-		$('#rule').DataTable({
+		$("#rule").DataTable({
 			data: this.rule,
-			columns: [{
-					"data": "id",
+			columns: [
+				{
+					data: "id",
 					render: function (data, type, row, meta) {
 						return meta.row + meta.settings._iDisplayStart + 1;
-					}
+					},
 				},
 				{
-					data: 'if'
+					data: "if",
 				},
 				{
-					data: 'then'
+					data: "then",
 				},
 				{
-					data: 'support'
+					data: "support",
 				},
 				{
-					data: 'confident'
-				}
+					data: "confident",
+				},
 			],
-			dom: 'Bfrtip',
-			buttons: [
-				'excel', 'pdf'
-			]
+			dom: "Bfrtip",
+			buttons: ["excel", "pdf"],
 		});
 
-		const pdf = document.querySelector(".buttons-pdf")
-		const excel = document.querySelector(".buttons-excel")
-		pdf.classList = "btn btn-sm btn-danger"
-		pdf.innerHTML = `<i class="fa fa-download"></i>Download PDF`
-		excel.classList = "btn btn-sm btn-success"
-		excel.innerHTML = `<i class="fa fa-download"></i>Download Excel`
+		const pdf = document.querySelector(".buttons-pdf");
+		const excel = document.querySelector(".buttons-excel");
+		pdf.classList = "btn btn-sm btn-danger";
+		pdf.innerHTML = `<i class="fa fa-download"></i>Download PDF`;
+		excel.classList = "btn btn-sm btn-success";
+		excel.innerHTML = `<i class="fa fa-download"></i>Download Excel`;
 	}
 }

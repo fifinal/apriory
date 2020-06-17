@@ -174,4 +174,7 @@
 		})
 	}
 	// ============ End Event ============
+
+
+	const card = document.g
 </script>
